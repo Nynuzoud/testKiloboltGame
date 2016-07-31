@@ -11,8 +11,14 @@ public class StartingClass extends Applet implements Runnable, KeyListener {
     private Robot robot;
     private Image image;
     private Image character;
+    private Image characterDown;
+    private Image characterJumped;
+    private Image currentSprite;
+    private Image background;
     private Graphics graphics;
     private URL base;
+    private static Background bg1;
+    private static Background bg2;
 
     @Override
     public void init() {
@@ -28,11 +34,18 @@ public class StartingClass extends Applet implements Runnable, KeyListener {
         }
 
         character = getImage(base, "./character.png");
+        characterDown = getImage(base, "./down.png");
+        characterJumped = getImage(base, "./jumped.png");
+        currentSprite = character;
+        background = getImage(base, "./background.png");
     }
 
     @Override
     public void start() {
         super.start();
+
+        bg1 = new Background(0,0);
+        bg2 = new Background(2160, 0);
 
         robot = new Robot();
 
@@ -53,6 +66,13 @@ public class StartingClass extends Applet implements Runnable, KeyListener {
     private void infinityLoop() {
         while (true) {
             robot.update();
+            if (robot.isJumped()) {
+                currentSprite = characterJumped;
+            } else if (!robot.isJumped() && !robot.isDucked()) {
+                currentSprite = character;
+            }
+            bg1.update();
+            bg2.update();
             repaint();
             try {
                 Thread.sleep(17);
@@ -88,18 +108,21 @@ public class StartingClass extends Applet implements Runnable, KeyListener {
                 System.out.println("UP");
                 break;
             case KeyEvent.VK_DOWN:
-                System.out.println("DOWN");
+                currentSprite = characterDown;
+                if (!robot.isJumped()) {
+                    robot.setDucked(true);
+                    robot.setSpeedX(0);
+                }
                 break;
             case KeyEvent.VK_LEFT:
-                System.out.println("LEFT");
                 robot.moveLeft();
+                robot.setMovingLeft(true);
                 break;
             case KeyEvent.VK_RIGHT:
-                System.out.println("RIGHT");
                 robot.moveRight();
+                robot.setMovingRight(true);
                 break;
             case KeyEvent.VK_SPACE:
-                System.out.println("SPACE");
                 robot.jump();
                 break;
         }
@@ -112,15 +135,16 @@ public class StartingClass extends Applet implements Runnable, KeyListener {
                 System.out.println("UP RELEASED");
                 break;
             case KeyEvent.VK_DOWN:
-                System.out.println("DOWN RELEASED");
+                currentSprite = character;
+                robot.setDucked(false);
                 break;
             case KeyEvent.VK_LEFT:
                 System.out.println("LEFT RELEASED");
-                robot.stop();
+                robot.stopLeft();
                 break;
             case KeyEvent.VK_RIGHT:
                 System.out.println("RIGHT RELEASED");
-                robot.stop();
+                robot.stopRight();
                 break;
             case KeyEvent.VK_SPACE:
                 System.out.println("SPACE RELEASED");
@@ -146,6 +170,16 @@ public class StartingClass extends Applet implements Runnable, KeyListener {
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-        g.drawImage(character, robot.getCenterX() - 61, robot.getCenterY() - 63, this);
+        g.drawImage(background, bg1.getBgX(), bg2.getBgY(), this);
+        g.drawImage(background, bg2.getBgX(), bg2.getBgY(), this);
+        g.drawImage(currentSprite, robot.getCenterX() - 61, robot.getCenterY() - 63, this);
+    }
+
+    public static Background getBg1() {
+        return bg1;
+    }
+
+    public static Background getBg2() {
+        return bg2;
     }
 }
